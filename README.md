@@ -20,10 +20,10 @@ LINK da pasta compartilhada: https://drive.google.com/drive/folders/1rr4roRz8dbX
 Observação do DDL (21-09-2025):
 1. Não criar ainda coisas avançadas como: INDEX, LOGGING, LOOKUP TABLE e TRIGGERS, até nós entendermos melhor estas merda
 2. No Oracle SQL Developer, para funcionar, fiz estas mudança
+  bigint → NUMBER
+  string → VARCHAR2
+  text → VARCHAR2(255) (para senha e descricao)
 
-bigint → NUMBER
-string → VARCHAR2
-text → VARCHAR2(255) (para senha e descricao)
 enum → VARCHAR2 ou CHAR(1) (para sexo e tipo)
 date → DATE
 timestamptz → DATE (você simplificou, o que é válido para um DDL básico)
