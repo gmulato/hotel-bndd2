@@ -18,8 +18,8 @@ BI3026191,  C##BRIBND2_BHIDEKI,  Bruno Hideki Uemura
 LINK da pasta compartilhada: https://drive.google.com/drive/folders/1rr4roRz8dbXAYwnszctFQKz8Dzw6tWfg?usp=sharing
 
 Observação do DDL (21-09-2025):
-1. Não criar ainda coisas avançadas como: INDEX, LOGGING, LOOKUP TABLE e TRIGGERS, até nós entendermos melhor estas merda
-2. No Oracle SQL Developer, para funcionar, fiz estas mudança abaixo:
+1. resolvido
+2. No Oracle SQL Developer, para funcionar:
 3. bigint → NUMBER
 4. string → VARCHAR2
 5. text → VARCHAR2(255) (para senha e descricao)
