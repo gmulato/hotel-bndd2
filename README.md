@@ -13,7 +13,7 @@ BI3032833,  C##BRIBND2_BTELINI,  Bruno Telini Rocha
 
 BI3033058,  C##BRIBND2_GUI_MULATO,  Guilherme Mulato Peres Silva
 
-BI3026191,  C##BRIBND2_BHIDEKI,  Bruno Hideki Uemura
+BI3025446,  C##BRIBND2_RAFAEL,  Rafael Hideki Yajima
 
 LINK da pasta compartilhada: https://drive.google.com/drive/folders/1rr4roRz8dbXAYwnszctFQKz8Dzw6tWfg?usp=sharing
 
