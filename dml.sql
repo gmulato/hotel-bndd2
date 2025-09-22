@@ -1,5 +1,11 @@
+-- O que é seed data: HTL_FUNCOES, HTL_RESERVA_STATUS, HTL_SERVICO, HTL_QUARTO
+-- observação, estes seed dados são dados essenciais e que não mudam
+
+-- TRUNCATE TABLE nome_da_tabela; deleta permanente e reseta os valores de colunas com IDENTITY ou SEQUENCES associadas com triggers
+-- DELETE FROM nome_da_tabela; é o que se usa pra ter possibilidade de rollback
+
 --------------------------------------------------------------------------------
--- FUNÇÕES
+-- FUNÇÕES (seed data)
 --------------------------------------------------------------------------------
 INSERT INTO HTL_FUNCAO (NAME) VALUES ('Gerente');
 INSERT INTO HTL_FUNCAO (NAME) VALUES ('Recepcionista');
@@ -87,7 +93,7 @@ SELECT f.FUNCIONARIO_ID, 'Camila Brito', '666.777.888-99', 'SC-55.666.777', 'FEM
 FROM HTL_FUNCIONARIO f WHERE f.EMAIL = 'ana.lima@hotel.com';
 
 --------------------------------------------------------------------------------
--- QUARTOS
+-- QUARTOS (seed data)
 --------------------------------------------------------------------------------
 INSERT INTO HTL_QUARTO (IDENTIFICADOR, TIPO, VALOR_DIARIA, INATIVO) VALUES ('101', 'STANDARD', 220.00, 0);
 INSERT INTO HTL_QUARTO (IDENTIFICADOR, TIPO, VALOR_DIARIA, INATIVO) VALUES ('102', 'STANDARD', 220.00, 0);
@@ -100,7 +106,7 @@ INSERT INTO HTL_QUARTO (IDENTIFICADOR, TIPO, VALOR_DIARIA, INATIVO) VALUES ('501
 INSERT INTO HTL_QUARTO (IDENTIFICADOR, TIPO, VALOR_DIARIA, INATIVO) VALUES ('502', 'SUITE MASTER', 800.00, 1);
 
 --------------------------------------------------------------------------------
--- SERVIÇOS
+-- SERVIÇOS (seed data)
 --------------------------------------------------------------------------------
 INSERT INTO HTL_SERVICO (NOME, DESCRICAO, VALOR) VALUES ('Café da manhã', 'Buffet continental', 35.00);
 INSERT INTO HTL_SERVICO (NOME, DESCRICAO, VALOR) VALUES ('Almoço',         'Menu executivo',    65.00);
@@ -111,7 +117,7 @@ INSERT INTO HTL_SERVICO (NOME, DESCRICAO, VALOR) VALUES ('Translado',      'Aero
 INSERT INTO HTL_SERVICO (NOME, DESCRICAO, VALOR) VALUES ('Serviço de Quarto', 'Pedidos no quarto', 40.00);
 
 --------------------------------------------------------------------------------
--- STATUS DE RESERVA
+-- STATUS DE RESERVA (seed data)
 --------------------------------------------------------------------------------
 INSERT INTO HTL_RESERVA_STATUS (STATUS) VALUES ('AGUARDANDO CHECK-IN');
 INSERT INTO HTL_RESERVA_STATUS (STATUS) VALUES ('OCUPADO');
