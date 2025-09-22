@@ -1,11 +1,3 @@
--- ============================================================
--- Oracle DDL (IDs como INTEGER GENERATED AS IDENTITY, sem UNIQUE e sem INDEX fora de PK/FK)
--- Prefixo de tabelas: HTL_
--- Inclui: CREATE TABLE, PRIMARY KEY, FOREIGN KEY, CHECK
--- Exclui: TRIGGERS, VIEWS, FUNCTIONS, PROCEDURES, UNIQUE, INDEX, SEQUENCES
--- Requer Oracle 12c+ para IDENTITY.
--- ============================================================
-
 -- =====================
 -- Tabela: HTL_FUNCIONARIO
 -- =====================
@@ -156,5 +148,5 @@ CREATE TABLE HTL_RESERVA_SERVICO (
 );
 
 -- ============================================================
--- Fim do DDL (IDENTITY, sem UNIQUE/INDEX/SEQUENCE/TRIGGER)
+-- Fim do DDL 
 -- ============================================================
