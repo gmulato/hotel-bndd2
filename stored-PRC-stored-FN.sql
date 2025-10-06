@@ -2,22 +2,16 @@
 -- STORED PROCEDURES (SP) E STORED FUNCTIONS (SF) ESSENCIAIS
 -- PARA O SISTEMA DE GERENCIAMENTO DE HOTELARIA
 
-
--- Observações:
--- (05-10-2025) Mudado para HTL_SP e HTL_FN para manter padrão com tabelas HTL_
+-- Observações (Lucas Novais de Oliveira):
+-- (05-10-2025) Mudado para HTL_SP e HTL_SF para manter padrão com tabelas HTL_
 -- Colocado o 'OUT' para retornar o ID do hóspede criado.
 
-
-
--- 1. Não está pronto ainda (03-10-2025 ultima atualização).
--- 2. Vcs preferem usar HTL_ ou PRC_ e FN_ para SP e SF ???
-
--- 3. As exceções estão comentadas para evitar interrupções durante testes iniciais.
---    Descomente e ajuste conforme necessário para o ambiente de produção.
+-- 1. Está pronto ainda (05-10-2025 ultima atualização).
+-- 2. As exceções estão comentadas para evitar interrupções durante testes iniciais.
+-- 3. Descomente e ajuste conforme necessário, está funcional.
 -- 
--- 4. Vou colocar comentários detalhados para cada SP e SF, explicando sua finalidade e lógica. (neste final de semana)
+-- 4. Vou colocar comentários detalhados para cada SP e SF, explicando sua finalidade e lógica.
 
--- 5. Algumas estão dando erro de compilação, revisar depois.
 --------------------------------------------------------------------------------
 -- Sobre STORED PROCEDURES (SP) e STORED FUNCTIONS (SF): Exemplo:
 
@@ -27,7 +21,6 @@
 -- OUT: O ID 100 é entregue de volta para a variável que chamou a procedure.
 
 --------------------------------------------------------------------------------
-
 
 -- ==========================================
 -- 1 - ADICIONAR HOSPEDE
