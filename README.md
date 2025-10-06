@@ -29,6 +29,8 @@ Observação do DDL (21-09-2025):
 9. numeric → NUMBER(10,2) (adequado para valores monetários)
 10. bool → NUMBER(1) (com DEFAULT 0 ou 1, representando true/false)
 
+11. O comando abaixo força a sessão a usar . para casas decimais no PL/SQL no Oracle, exemplo: altura 1.80, precisa do comando abaixo ou vai dar erro
+12. ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '.,';
 
 Para saber o próximo número de ID:
 
