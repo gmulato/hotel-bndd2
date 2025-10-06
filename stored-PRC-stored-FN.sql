@@ -1909,3 +1909,311 @@ END HTL_SF_TOTAL_SERVICOS_RESERVA;
 -- ==========================================
 -- FIM DO SCRIPT DE PROCEDURES E FUNCTIONS
 -- ==========================================
+
+
+
+    /* um teste, não precisa compilar este de baixo
+-- ==========================================
+-- ==========================================
+-- 15 - CRIAR RESERVA COM VALIDAÇÃO DE CONFLITOS
+-- ==========================================
+CREATE OR REPLACE PROCEDURE HTL_SP_CRIAR_RESERVA_VALIDADA (
+    p_quarto_id          IN INTEGER,
+    p_hospede_id         IN INTEGER,
+    p_criado_por_func_id IN INTEGER,
+    p_data_inicio        IN DATE,
+    p_data_fim           IN DATE,
+    p_reserva_id_out     OUT INTEGER
+)
+AS
+    v_valor_diaria      NUMBER(10,2);
+    v_valor_total       NUMBER(10,2);
+    v_dias_reserva      INTEGER;
+    v_status_conf_id    INTEGER; -- ID para o status 'AGUARDANDO CHECK-IN'
+    v_quarto_disponivel INTEGER;
+    v_quarto_identificador HTL_QUARTO.IDENTIFICADOR%TYPE;
+BEGIN
+    -- 1. VALIDAÇÃO: Data Fim deve ser maior que Data Início
+    IF p_data_fim <= p_data_inicio THEN
+        RAISE_APPLICATION_ERROR(-20200, 'Data Fim (' || TO_CHAR(p_data_fim, 'DD/MM/YYYY') || 
+                                ') deve ser posterior à Data Início (' || TO_CHAR(p_data_inicio, 'DD/MM/YYYY') || ').');
+    END IF;
+    
+    -- 2. VALIDAÇÃO: Não permite reservas no passado
+    IF TRUNC(p_data_inicio) < TRUNC(SYSDATE) THEN
+        RAISE_APPLICATION_ERROR(-20201, 'Data Início (' || TO_CHAR(p_data_inicio, 'DD/MM/YYYY') || 
+                                ') não pode ser anterior à data atual (' || TO_CHAR(SYSDATE, 'DD/MM/YYYY') || ').');
+    END IF;
+    
+    -- 3. VALIDAÇÃO: Verificar se o quarto existe e está ativo
+    BEGIN
+        SELECT VALOR_DIARIA, IDENTIFICADOR 
+        INTO v_valor_diaria, v_quarto_identificador
+        FROM HTL_QUARTO
+        WHERE QUARTO_ID = p_quarto_id AND INATIVO = 0;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20202, 'Quarto ID ' || p_quarto_id || ' não encontrado ou está inativo.');
+    END;
+    
+    -- 4. VALIDAÇÃO: Verificar se o hóspede existe
+    BEGIN
+        SELECT 1 INTO v_status_conf_id -- Reutiliza variável temporariamente
+        FROM HTL_HOSPEDE
+        WHERE HOSPEDE_ID = p_hospede_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20203, 'Hóspede ID ' || p_hospede_id || ' não encontrado.');
+    END;
+    
+    -- 5. VALIDAÇÃO: Verificar se o funcionário existe
+    BEGIN
+        SELECT 1 INTO v_status_conf_id -- Reutiliza variável temporariamente
+        FROM HTL_FUNCIONARIO
+        WHERE FUNCIONARIO_ID = p_criado_por_func_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20204, 'Funcionário ID ' || p_criado_por_func_id || ' não encontrado.');
+    END;
+    
+    -- 6. VALIDAÇÃO CRÍTICA: Verificar disponibilidade do quarto (usa a SF existente)
+    v_quarto_disponivel := HTL_SF_VERIFICAR_QUARTO_DISPONIVEL(
+        p_quarto_id   => p_quarto_id,
+        p_data_inicio => p_data_inicio,
+        p_data_fim    => p_data_fim
+    );
+    
+    IF v_quarto_disponivel = 0 THEN
+        RAISE_APPLICATION_ERROR(-20205, 'Quarto ' || v_quarto_identificador || 
+                                ' (ID: ' || p_quarto_id || ') não está disponível no período de ' || 
+                                TO_CHAR(p_data_inicio, 'DD/MM/YYYY') || ' a ' || 
+                                TO_CHAR(p_data_fim, 'DD/MM/YYYY') || '. Há conflito com outra reserva ativa.');
+    END IF;
+    
+    -- 7. Buscar ID do status 'AGUARDANDO CHECK-IN'
+    SELECT RESERVA_STATUS_ID INTO v_status_conf_id
+    FROM HTL_RESERVA_STATUS
+    WHERE STATUS = 'AGUARDANDO CHECK-IN';
+    
+    -- 8. Cálculos: Diárias e Valor Total
+    v_dias_reserva := TRUNC(p_data_fim) - TRUNC(p_data_inicio);
+    
+    -- Se a data de fim for igual à de início, conta como 1 diária.
+    IF v_dias_reserva = 0 THEN
+        v_dias_reserva := 1;
+    END IF;
+    
+    v_valor_total := v_valor_diaria * v_dias_reserva;
+    
+    -- 9. Inserir a Reserva
+    INSERT INTO HTL_RESERVA (
+        QUARTO_ID, HOSPEDE_ID, CRIADO_POR, RESERVA_STATUS_ID,
+        VALOR_CONTRATADO, DATA_INICIO, DATA_FIM
+    )
+    VALUES (
+        p_quarto_id, p_hospede_id, p_criado_por_func_id, v_status_conf_id,
+        v_valor_total, p_data_inicio, p_data_fim
+    )
+    RETURNING RESERVA_ID INTO p_reserva_id_out;
+    
+    -- 10. Inserir no Histórico de Status (rastreabilidade)
+    INSERT INTO HTL_RESERVA_STATUS_HIST (
+        RESERVA_STATUS_ID, RESERVA_ID, STATUS_EM
+    )
+    VALUES (
+        v_status_conf_id, p_reserva_id_out, SYSTIMESTAMP
+    );
+    
+    -- 11. Feedback
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('RESERVA CRIADA COM SUCESSO!');
+    DBMS_OUTPUT.PUT_LINE('ID da Reserva: ' || p_reserva_id_out);
+    DBMS_OUTPUT.PUT_LINE('Quarto: ' || v_quarto_identificador || ' (ID: ' || p_quarto_id || ')');
+    DBMS_OUTPUT.PUT_LINE('Período: ' || TO_CHAR(p_data_inicio, 'DD/MM/YYYY') || ' a ' || TO_CHAR(p_data_fim, 'DD/MM/YYYY'));
+    DBMS_OUTPUT.PUT_LINE('Diárias: ' || v_dias_reserva);
+    DBMS_OUTPUT.PUT_LINE('Valor Total: R$ ' || TO_CHAR(v_valor_total, 'FM9999990.00'));
+    DBMS_OUTPUT.PUT_LINE('========================================');
+
+    COMMIT;
+    */
+/*
+-- ==========================================
+-- TUTORIAL DE USO: HTL_SP_CRIAR_RESERVA_VALIDADA
+-- ==========================================
+
+-- CENÁRIO DE TESTE: Baseado no DML, sabemos que:
+-- Quarto '201' (ID=3) tem reserva de Fernanda: 22/09 a 26/09, Status OCUPADO
+-- Quarto '202' (ID=4) tem reserva de Pedro: 25/09 a 28/09, Status AGUARDANDO CHECK-IN
+
+-- ==========================================
+-- TESTE 1: SUCESSO - Reserva em período livre
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 1, -- Quarto '101' livre
+        p_hospede_id         => 1, -- Bruno Almeida
+        p_criado_por_func_id => 1, -- Maria Souza
+        p_data_inicio        => DATE '2025-10-10',
+        p_data_fim           => DATE '2025-10-12',
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- TESTE 2: FALHA - Conflito de Data (Sobreposição)
+-- Tenta reservar o Quarto '201' em período que conflita com reserva de Fernanda
+-- Erro esperado: ORA-20205
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 3, -- Quarto '201' (ocupado 22/09 a 26/09)
+        p_hospede_id         => 3, -- Pedro Rocha
+        p_criado_por_func_id => 1,
+        p_data_inicio        => DATE '2025-09-24', -- Conflita com Fernanda
+        p_data_fim           => DATE '2025-09-27',
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- TESTE 3: FALHA - Data Fim antes da Data Início
+-- Erro esperado: ORA-20200
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 1,
+        p_hospede_id         => 1,
+        p_criado_por_func_id => 1,
+        p_data_inicio        => DATE '2025-10-15',
+        p_data_fim           => DATE '2025-10-10', -- Antes do início!
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- TESTE 4: FALHA - Reserva no Passado
+-- Erro esperado: ORA-20201
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 1,
+        p_hospede_id         => 1,
+        p_criado_por_func_id => 1,
+        p_data_inicio        => DATE '2025-09-01', -- Passado
+        p_data_fim           => DATE '2025-09-03',
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- TESTE 5: FALHA - Quarto Inativo
+-- Primeiro, inative um quarto:
+-- UPDATE HTL_QUARTO SET INATIVO = 1 WHERE QUARTO_ID = 9; -- Suite Master 502
+-- Erro esperado: ORA-20202
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 9, -- Quarto inativo
+        p_hospede_id         => 1,
+        p_criado_por_func_id => 1,
+        p_data_inicio        => DATE '2025-10-20',
+        p_data_fim           => DATE '2025-10-22',
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- TESTE 6: FALHA - Hóspede Inexistente
+-- Erro esperado: ORA-20203
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 1,
+        p_hospede_id         => 999, -- ID inexistente
+        p_criado_por_func_id => 1,
+        p_data_inicio        => DATE '2025-10-20',
+        p_data_fim           => DATE '2025-10-22',
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- TESTE 7: SUCESSO - Reserva Exatamente Após Outra Terminar
+-- Quarto '201' tem reserva até 26/09. Nova reserva começa em 27/09.
+-- Este teste valida que a lógica de sobreposição está correta.
+-- ==========================================
+SET SERVEROUTPUT ON;
+--
+DECLARE
+    v_nova_reserva_id INTEGER;
+BEGIN
+    HTL_SP_CRIAR_RESERVA_VALIDADA(
+        p_quarto_id          => 3, -- Quarto '201'
+        p_hospede_id         => 3, -- Pedro Rocha
+        p_criado_por_func_id => 1,
+        p_data_inicio        => DATE '2025-09-27', -- Dia seguinte ao check-out
+        p_data_fim           => DATE '2025-09-30',
+        p_reserva_id_out     => v_nova_reserva_id
+    );
+END;
+
+-- ==========================================
+-- QUERY DE VERIFICAÇÃO: Ver Conflitos
+-- Use esta query para entender por que uma reserva foi bloqueada
+-- ==========================================
+SELECT 
+    r.RESERVA_ID,
+    q.IDENTIFICADOR AS QUARTO,
+    h.NOME AS HOSPEDE,
+    rs.STATUS,
+    TO_CHAR(r.DATA_INICIO, 'DD/MM/YYYY') AS INICIO,
+    TO_CHAR(r.DATA_FIM, 'DD/MM/YYYY') AS FIM
+FROM HTL_RESERVA r
+JOIN HTL_QUARTO q ON q.QUARTO_ID = r.QUARTO_ID
+JOIN HTL_HOSPEDE h ON h.HOSPEDE_ID = r.HOSPEDE_ID
+JOIN HTL_RESERVA_STATUS rs ON rs.RESERVA_STATUS_ID = r.RESERVA_STATUS_ID
+WHERE 
+    q.QUARTO_ID = 3 -- Substitua pelo ID do quarto que quer verificar
+    AND rs.STATUS IN ('AGUARDANDO CHECK-IN', 'OCUPADO')
+ORDER BY r.DATA_INICIO;
+*/
+
+-- ==========================================
+-- EXCEPTIONS
+-- ==========================================
+/*
+EXCEPTION
+    -- Tratamento Geral - Os erros específicos já são lançados no corpo
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('ERRO GERAL: ' || SQLERRM);
+        RAISE; -- Re-lança o erro original para não mascarar o código de erro
+
+
+END HTL_SP_CRIAR_RESERVA_VALIDADA;
+-- ==========================================
+*/
