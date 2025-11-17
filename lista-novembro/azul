@@ -1,0 +1,98 @@
+1---------------------
+create or replace TRIGGER TRG_MENORES
+BEFORE INSERT OR UPDATE ON AMIGO
+FOR EACH ROW
+BEGIN
+    IF (:NEW.IDADE < 18) THEN
+        RAISE_APPLICATION_ERROR(-20001,'ERRO: ' || :NEW.ANOME || ' tem menos de 18 anos!');
+    END IF;
+
+END;
+
+2-----------------------
+create or replace TRIGGER TRG_LISTAPRESENTE_LIMITE
+BEFORE INSERT ON ListaPresente
+FOR EACH ROW
+DECLARE
+    V_COUNT     NUMBER;
+    V_SUM_VALOR NUMBER;
+    V_NOVO_VALOR Presente.pvalor%TYPE;
+BEGIN
+    SELECT COUNT(*) INTO V_COUNT
+    FROM ListaPresente
+    WHERE aid = :new.aid;
+
+    IF V_COUNT >= 10 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Amigo (AID: ' || :new.aid || ') já possui 10 itens na lista. Limite máximo atingido.');
+    END IF;
+
+    SELECT NVL(SUM(p.pvalor), 0) INTO V_SUM_VALOR
+    FROM ListaPresente lp
+    JOIN Presente p ON lp.pid = p.pid
+    WHERE lp.aid = :new.aid;
+
+    SELECT pvalor INTO V_NOVO_VALOR
+    FROM Presente
+    WHERE pid = :new.pid;
+
+    IF (V_SUM_VALOR + V_NOVO_VALOR) > 500 THEN
+        RAISE_APPLICATION_ERROR(-20004, 'A lista do Amigo (AID: ' || :new.aid || ') ultrapassaria R$ 500,00 com a adição deste item.');
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Presente (PID: ' || :new.pid || ') não encontrado no cadastro de presentes.');
+END;
+
+3--------------
+create or replace TRIGGER TRG_LISTAPRESENTE_LIMITE
+BEFORE INSERT ON ListaPresente
+FOR EACH ROW
+DECLARE
+    V_COUNT     NUMBER;
+    V_SUM_VALOR NUMBER;
+    V_NOVO_VALOR Presente.pvalor%TYPE;
+BEGIN
+    SELECT COUNT(*) INTO V_COUNT
+    FROM ListaPresente
+    WHERE aid = :new.aid;
+
+    IF V_COUNT >= 10 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Amigo (AID: ' || :new.aid || ') já possui 10 itens na lista. Limite máximo atingido.');
+    END IF;
+
+    SELECT NVL(SUM(p.pvalor), 0) INTO V_SUM_VALOR
+    FROM ListaPresente lp
+    JOIN Presente p ON lp.pid = p.pid
+    WHERE lp.aid = :new.aid;
+
+    SELECT pvalor INTO V_NOVO_VALOR
+    FROM Presente
+    WHERE pid = :new.pid;
+
+    IF (V_SUM_VALOR + V_NOVO_VALOR) > 500 THEN
+        RAISE_APPLICATION_ERROR(-20004, 'A lista do Amigo (AID: ' || :new.aid || ') ultrapassaria R$ 500,00 com a adição deste item.');
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Presente (PID: ' || :new.pid || ') não encontrado no cadastro de presentes.');
+END;
+4----------------------
+create or replace TRIGGER TRG_PRESENTE_FORA_DA_LISTA
+BEFORE INSERT OR UPDATE OF pid_recebido ON AmigoSecreto
+FOR EACH ROW
+DECLARE
+    V_COUNT NUMBER;
+BEGIN
+    IF :new.pid_recebido IS NOT NULL THEN
+
+        SELECT COUNT(*) INTO V_COUNT
+        FROM ListaPresente
+        WHERE aid = :new.aid AND pid = :new.pid_recebido;
+
+        IF V_COUNT = 0 THEN
+            RAISE_APPLICATION_ERROR(-20008, 'O participante (AID: ' || :new.aid || ') não pode receber o presente (PID: ' || :new.pid_recebido || ') pois este não está em sua lista.');
+        END IF;
+    END IF;
+END;
