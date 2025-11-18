@@ -1,5 +1,5 @@
 ------------------------------------------------------------
--- 1) Impedir menores de 18 anos (amigo secreto)
+-- 1) Impedir menores de 18 anos
 ------------------------------------------------------------
 CREATE OR REPLACE TRIGGER TRG_IMPEDIR_MENOR
 BEFORE INSERT OR UPDATE ON AMIGOSECRETO
@@ -22,7 +22,7 @@ BEGIN
 END;
 
 ------------------------------------------------------------
--- 2) Limite 10 itens e valor máximo 500 (estilo professor)
+-- 2) Limite 10 itens e valor máximo 500 
 ------------------------------------------------------------
 CREATE OR REPLACE TRIGGER TRG_QTDE_VALOR_MAX
 BEFORE INSERT OR UPDATE ON LISTAPRESENTE
@@ -98,7 +98,7 @@ CREATE OR REPLACE VIEW V_LISTAPRESENTE AS
 SELECT * FROM LISTAPRESENTE;
 
 ------------------------------------------------------------
--- INSTEAD OF UPDATE na view (estilo professor)
+-- INSTEAD OF UPDATE na view 
 ------------------------------------------------------------
 CREATE OR REPLACE TRIGGER TRG_VALOR_MAX_UPD
 INSTEAD OF UPDATE ON V_LISTAPRESENTE
@@ -201,8 +201,7 @@ BEGIN
 END;
 
 ------------------------------------------------------------
--- 5) Média na MATRICULA (schema real)
---    Cria coluna MEDIA e atualiza após operações em ALUNO_AVALIACAO
+-- 5) Média na MATRICULA 
 ------------------------------------------------------------
 ALTER TABLE MATRICULA ADD MEDIA NUMBER(3,1);
 
@@ -249,11 +248,10 @@ BEGIN
 END;
 
 ------------------------------------------------------------
--- 6) Situação na MATRICULA (schema real)
---    Cria coluna SITUACAO e atualiza conforme a média
+-- 6) Situação na MATRICULA 
 ------------------------------------------------------------
 ALTER TABLE MATRICULA ADD SITUACAO VARCHAR2(15);
-/
+
 
 CREATE OR REPLACE TRIGGER TRG_ATUALIZA_SITUACAO
 AFTER UPDATE OF MEDIA ON MATRICULA
