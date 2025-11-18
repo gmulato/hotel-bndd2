@@ -20,7 +20,7 @@ BEGIN
         );
     END IF;
 END;
-/
+
 ------------------------------------------------------------
 -- 2) Limite 10 itens e valor máximo 500 (estilo professor)
 ------------------------------------------------------------
@@ -90,13 +90,13 @@ BEGIN
         END IF;        
     END IF;    
 END;
-/
+
 ------------------------------------------------------------
 -- View para UPDATE (mutating)
 ------------------------------------------------------------
 CREATE OR REPLACE VIEW V_LISTAPRESENTE AS
 SELECT * FROM LISTAPRESENTE;
-/
+
 ------------------------------------------------------------
 -- INSTEAD OF UPDATE na view (estilo professor)
 ------------------------------------------------------------
@@ -153,7 +153,7 @@ BEGIN
         END IF;    
     END IF;    
 END;
-/
+
 ------------------------------------------------------------
 -- 3) Garantir 1 a 10 itens (amigo secreto)
 ------------------------------------------------------------
@@ -176,7 +176,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20031,'ERRO - Mínimo 1 presente.');
     END IF;
 END;
-/
+
 ------------------------------------------------------------
 -- 4) Presente deve estar na lista do participante
 ------------------------------------------------------------
@@ -199,13 +199,13 @@ BEGIN
         );
     END IF;
 END;
-/
+
 ------------------------------------------------------------
 -- 5) Média na MATRICULA (schema real)
 --    Cria coluna MEDIA e atualiza após operações em ALUNO_AVALIACAO
 ------------------------------------------------------------
 ALTER TABLE MATRICULA ADD MEDIA NUMBER(3,1);
-/
+
 
 CREATE OR REPLACE TRIGGER TRG_ATUALIZA_MEDIA
 AFTER INSERT OR UPDATE OR DELETE ON ALUNO_AVALIACAO
@@ -247,7 +247,7 @@ BEGIN
        SET MEDIA = NVL(V_MEDIA, 0)
      WHERE ID_MATRICULA = V_ID_MATRICULA;
 END;
-/
+
 ------------------------------------------------------------
 -- 6) Situação na MATRICULA (schema real)
 --    Cria coluna SITUACAO e atualiza conforme a média
@@ -273,4 +273,3 @@ BEGIN
        SET SITUACAO = V_SIT
      WHERE ID_MATRICULA = :NEW.ID_MATRICULA;
 END;
-/
